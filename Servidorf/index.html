@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>La Liebre y los Perros</title>
+    <style>
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(5, 100px); /* Ancho de cada casilla */
+            grid-template-rows: repeat(5, 100px); /* Altura de cada casilla */
+        }
+
+        .casilla {
+            width: 80px;
+            height: 80px;
+            border: 1px solid black;
+            text-align: center;
+            font-size: 24px;
+        }
+        .objetivo {
+            background-color: yellow;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            background-color: #5cbf58;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>La Liebre y los Perros</h1>
+    <div class="tablero" id="tablero"></div>
+    <div id="mensaje"></div>
+    <button onclick="reiniciarJuego()">Iniciar</button>
+    <script>
+        
+        let tablero = [
+            [' ', ' ', ' ', ' ', ' '],
+            [' ', 'P', ' ', 'P', ' '],
+            ['', ' ', 'L', ' ', ''],
+            [' ', 'P', ' ', 'P', ' '],
+            [' ', ' ', ' ', ' ', '']
+        ];
+
+        function reiniciarJuego(){
+        let liebre = { x: 2, y: 2 };
+        let perros = [
+            { x: 0, y: 0 },
+            { x: 0, y: 4 },
+            { x: 4, y: 0 },
+            { x: 4, y: 4 }
+        ];
+
+        let objetivoX, objetivoY;
+
+        function dibujarTablero() {
+            let tableroElement = document.getElementById('tablero');
+            tableroElement.innerHTML = '';
+
+            for (let i = 0; i < tablero.length; i++) {
+                for (let j = 0; j < tablero[i].length; j++) {
+                    let casilla = document.createElement('div');
+                    casilla.classList.add('casilla');
+                    casilla.innerText = tablero[i][j];
+
+                    // Resaltar la posición del objetivo
+                    if (i === objetivoX && j === objetivoY) {
+                        casilla.classList.add('objetivo');
+                    }
+
+                    tableroElement.appendChild(casilla);
+                }
+            }
+        }
+
+        function moverLiebre(dx, dy) {
+            let nuevoX = liebre.x + dx;
+            let nuevoY = liebre.y + dy;
+
+            if (nuevoX >= 0 && nuevoX < tablero.length && nuevoY >= 0 && nuevoY < tablero[0].length) {
+                if (tablero[nuevoX][nuevoY] === 'P') {
+                    let mensajeElement = document.getElementById('mensaje');
+                    mensajeElement.innerText = '¡La liebre fue atrapada por un perro!';
+                    return; // La liebre fue capturada, detenemos el movimiento.
+                }
+
+                tablero[liebre.x][liebre.y] = ' ';
+                liebre.x = nuevoX;
+                liebre.y = nuevoY;
+                tablero[liebre.x][liebre.y] = 'L';
+                moverPerrosAI(); // Cambio a moverPerrosAI()
+                dibujarTablero();
+                verificarVictoria();
+            }
+        }
+
+        function moverPerrosAI() {
+            for (let i = 0; i < perros.length; i++) {
+                // Lógica para mover cada perro hacia la liebre
+                let dx = (liebre.x > perros[i].x) ? 1 : (liebre.x < perros[i].x) ? -1 : 0;
+                let dy = (liebre.y > perros[i].y) ? 1 : (liebre.y < perros[i].y) ? -1 : 0;
+
+                let nuevoX = perros[i].x + dx;
+                let nuevoY = perros[i].y + dy;
+
+                if (nuevoX >= 0 && nuevoX < tablero.length && nuevoY >= 0 && nuevoY < tablero[0].length) {
+                    if (!(nuevoX === liebre.x && nuevoY === liebre.y) && tablero[nuevoX][nuevoY] !== 'L') {
+                        tablero[perros[i].x][perros[i].y] = ' ';
+                        perros[i].x = nuevoX;
+                        perros[i].y = nuevoY;
+                        tablero[perros[i].x][perros[i].y] = 'P';
+                    }
+                }
+            }
+            verificarVictoria();
+            dibujarTablero();
+        }
+
+        function verificarVictoria() {
+            if (liebre.x === objetivoX && liebre.y === objetivoY) {
+                let mensajeElement = document.getElementById('mensaje');
+                mensajeElement.innerText = '¡Ganaste! La liebre ha llegado al objetivo.';
+            }
+        }
+        function iniciarJuego() {
+            // Generar un punto aleatorio al que la liebre debe llegar
+            objetivoX = Math.floor(Math.random() * tablero.length);
+            objetivoY = Math.floor(Math.random() * tablero[0].length);
+
+            // Limpiar el mensaje
+            let mensajeElement = document.getElementById('mensaje');
+            mensajeElement.innerText = 'La liebre debe llegar aquí (marcado en amarillo)';
+
+            // Dibujar el tablero
+            dibujarTablero();
+        }
+
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'ArrowUp':
+                    moverLiebre(-1, 0);
+                    break;
+                case 'ArrowDown':
+                    moverLiebre(1, 0);
+                    break;
+                case 'ArrowLeft':
+                    moverLiebre(0, -1);
+                    break;
+                case 'ArrowRight':
+                    moverLiebre(0, 1);
+                    break;
+            }
+        });
+        iniciarJuego();
+    }
+    /*function minimax(tablero, profundidad, esMaximizando) {
+    if (profundidad === 0 || juegoTerminado(tablero)) {
+        return evaluacion(tablero);
+    }
+
+    if (esMaximizando) {
+        let mejorValor = -Infinity;
+        for (cada movimiento posible de la liebre) {
+            // Simular movimiento de la liebre en el tablero
+            let nuevoTablero = simularMovimientoLiebre(tablero, movimiento);
+
+            let valor = minimax(nuevoTablero, profundidad - 1, false);
+            mejorValor = Math.max(mejorValor, valor);
+        }
+        return mejorValor;
+    } else {
+        let mejorValor = Infinity;
+        for (cada movimiento posible de los perros) {
+            // Simular movimiento de los perros en el tablero
+            let nuevoTablero = simularMovimientoPerros(tablero, movimiento);
+
+            let valor = minimax(nuevoTablero, profundidad - 1, true);
+            mejorValor = Math.min(mejorValor, valor);
+        }
+        return mejorValor;
+    }
+}
+function generarTablerosPosibles() {
+    let tableros = [];
+    for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+            let nuevoTablero = JSON.parse(JSON.stringify(tablero)); // Copiar el tablero actual
+
+            // Generar un nuevo objetivo en una posición diferente
+            nuevoTablero[i][j] = 'O'; // 'O' representa la posición objetivo
+            tableros.push(nuevoTablero);
+        }
+    }
+    return tableros;
+}
+
+// Ejemplo de uso:
+let tablerosPosibles = generarTablerosPosibles();
+console.log(tablerosPosibles); // Aquí tendrás una lista de diferentes tableros con objetivos posibles.
+
+*/
+    </script>
+    
+</body>
+</html>
